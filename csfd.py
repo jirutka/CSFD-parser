@@ -1,4 +1,3 @@
-#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 # encoding: utf-8
 
@@ -27,10 +26,15 @@
 #
 # Upozornění: Používejte tento kód pouze pro vlastní potřebu, nezneužívejte ho 
 # pro vykrádání databáze ČSFD!
+#
+# Požadavky: 
+#   - Python 3 (testováno na verzi 3.1)
+#   - lxml (testováno na verzi 2.3.1)
 # 
+#
 # @author Jakub Jirutka <jakub@jirutka.cz>
-# @version 1.0 beta
-# @date 2011-12-15
+# @version 1.0.1 beta
+# @date 2011-12-16
 #
 
 from urllib.request import Request, urlopen
@@ -101,6 +105,9 @@ class Movie:
 
 
     def __init__(self, url):
+        """
+        - url: celá URL stránky filmu [string]
+        """
         self.actors = list()
         self.best_rank = None
         self.content = None
@@ -114,7 +121,8 @@ class Movie:
         self.names = {}
         self.posters = list()
         self.rating = None
-        self.runtime = None
+        self.runtime_str = None
+        self.url = url
         self.website_url = None
         self.worst_rank = None
         self.year = None
@@ -151,13 +159,13 @@ class Movie:
             raw_cyr = profile.xpath("p[@class='origin']/text()")[0]
             cyr = list( i.strip() for i in raw_cyr.split(',') )
 
-            # stopáž
-            if (cyr[-1].endswith("min")):
-                self.runtime = cyr.pop().rstrip(' min')
+            # stopáž (celý řetězec; může obsahovat i stopáž režisérského střihu apod.)
+            if ("min" in cyr[-1]):
+                self.runtime_str = cyr.pop()
     
             # rok
             if (cyr[-1].isdigit()):
-                self.year = cyr.pop()
+                self.year = int( cyr.pop() )
 
             # země
             self.countries = [i for i in cyr]
@@ -190,50 +198,52 @@ class Movie:
         # hodnocení
         try:
             rating = doc_rating.xpath("h2/text()")[0].strip('%')
-            self.rating = int(rating)
+            self.rating = int( rating )
         except IndexError: pass
 
         # umístění v žebříčku nejlepších
         try:
             rank = doc_rating.xpath("//a[contains(@href, 'nejlepsi')]/text()")[0]
-            self.best_rank = int(rank.split('.')[0])
+            self.best_rank = int( rank.split('.')[0] )
         except IndexError: pass
 
         # umíštění v žebříčku nejhorších
         try:
             rank = doc_rating.xpath("//a[contains(@href, 'nejhorsi')]/text()")[0]
-            self.worst_rank = int(rank.rsplit('.')[0])
+            self.worst_rank = int( rank.rsplit('.')[0] )
         except IndexError: pass
 
         # umístění v žebříčku nejoblíbenějších
         try:
             rank = doc_rating.xpath("//a[contains(@href, 'nejoblibenejsi')]/text()")[0]
-            self.favorite_rank = int(rank.split('.')[0])
+            self.favorite_rank = int( rank.split('.')[0] )
         except IndexError: pass
 
         # umístění v žebříčku nejrozporuplnějších
         try:
             rank = doc_rating.xpath("//a[contains(@href, 'nejrozporuplnejsi')]/text()")[0]
-            self.controversial_rank = int(rank.split('.')[0])
+            self.controversial_rank = int( rank.split('.')[0] )
         except IndexError: pass
 
-        # main poster
-        try:
-            self.posters.append(doc.xpath("//div[@id='poster']/img/@src")[0])
-        except IndexError: pass
-
-        # all posters
+        # všechny plakáty (vč. hlavního)
         regexp = re.compile("url\('(.*)'")
         for raw in doc.xpath("//div[@id='posters']/div[2]//div/@style"):
             link = regexp.search(raw).group(1).replace('\\', '')
             self.posters.append(link)
 
-        # Link to IMDb.com
+        # pokud je k dispozici jen jeden plakát, tak se negeneruje sekce "posters",
+        # takže musí načíst ze sekce "poster"
+        if (len(self.posters) == 0):
+            try:
+                self.posters.append(doc.xpath("//div[@id='poster']/img/@src")[0])
+            except IndexError: pass
+
+        # odkaz na IMDb.com
         try: 
             self.imbd_url = doc.xpath("//div[@id='share']//a[@title='profil na IMDb.com']/@href")[0]
         except IndexError: pass
 
-        # Link to official website
+        # odkaz na oficiální web filmu
         try:
             self.website_url = doc.xpath("//div[@id='share']//a[@class='www']/@href")[0]
         except IndexError: pass
@@ -267,9 +277,9 @@ class Movie:
         - return: jazyk původního název filmu [string]
         """
 
-        langs = set(self.names.keys())
+        langs = set( self.names.keys() )
 
-        if (self.countries.count('Česko') or self.countries.count('Československo')):
+        if (self.countries.count("Česko") or self.countries.count("Československo")):
             return 'cs'
 
         else:
@@ -297,8 +307,18 @@ class Movie:
 
         - return: původní název filmu [string]
         """
-
         return self.names[self.origo_lang]
+
+
+    @property
+    def runtime(self):
+        """
+        Vrátí standardní stopáž filmu jako číslo (ořízne případnou další
+        stopáž uvedenou v závorce).
+        
+        - return: stopáž filmu [int]
+        """
+        return int( self.runtime_str.split()[0] ) if self.runtime_str else None
 
 
 
@@ -310,6 +330,12 @@ class MovieSearchResult:
     """
 
     def __init__(self, name, name_alt, year, url):
+        """
+        - name: český název [string]
+        - name_alt: druhý název (většinou původní název filmu) [string]
+        - year: rok vydání [int]
+        - url: celá URL stránky filmu [string]
+        """
         self.name = name
         self.name_alt = name_alt
         self.url = url
@@ -334,6 +360,10 @@ class Person:
     """
     
     def __init__(self, name, profile_url):
+        """
+        - name: celé jméno [string]
+        - profile_url: celá URL stránky profilu [string]
+        """
         self.name = name
         self.profile_url = profile_url
 
