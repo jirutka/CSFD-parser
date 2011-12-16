@@ -33,7 +33,7 @@
 # 
 #
 # @author Jakub Jirutka <jakub@jirutka.cz>
-# @version 1.0.2 beta
+# @version 1.0.3 beta
 # @date 2011-12-16
 #
 
@@ -59,45 +59,45 @@ class Movie:
     a zparsuje stránku daného filmu.
     """
 
-    # Mapování čísla vlajky na kód jazyka
-    _MAP_FLAG_LANG = {
-        1 : 'en',  # USA
-        2 : 'en',  # Velká Británie
-        3 : 'en',  # Austrálie
-        4 : 'de',  # Německo
-        5 : 'de',  # Rakousko
-        6 : 'en',  # Kanada
-        7 : 'da',  # Dánsko
-        8 : 'fi',  # Finsko
-        10 : 'hu', # Maďarsko
-        11 : 'nl', # Nizozemí
-        12 : 'pl', # Polsko
-        13 : 'ru', # Rusko
-        14 : 'sv', # Švédsko
-        15 : 'de', # Švýcarsko
-        16 : 'th', # Thajsko
-        17 : 'tr', # Turecko
-        18 : 'nl', # Belgie
-        19 : 'fr', # Francie
-        21 : 'ga', # Irsko
-        22 : 'it', # Itálie
-        23 : 'es', # Španělština
-        25 : 'no', # Norsko
-        27 : 'es', # Argentina
-        30 : 'pt', # Portugalština
-        31 : 'tg', # Tádžikistán
-        33 : 'jp', # Japonsko
-        34 : 'cs', # Česká Republika
-        35 : 'en', # Austrálie
-        36 : 'cs', # Česká Republika
-        37 : 'bg', # Bulharsko
-        41 : 'ar', # Egypt
-        47 : 'de', # Německo
-        48 : 'de', # Německo
-        49 : 'zh', # Čína
-        52 : 'sk', # Slovensko
-        55 : 'fa', # Peru
-        62 : 'is', # Island
+    # Mapování čísla vlajky na kód země (ISO 3166-1)
+    _MAP_FLAG_ISO = {
+        1 : 'US',  # USA
+        2 : 'GB',  # Velká Británie
+        3 : 'AU',  # Austrálie
+        4 : 'DE',  # Německo
+        5 : 'AT',  # Rakousko
+        6 : 'CA',  # Kanada
+        7 : 'DK',  # Dánsko
+        8 : 'FI',  # Finsko
+        10 : 'HU', # Maďarsko
+        11 : 'NL', # Nizozemí
+        12 : 'PL', # Polsko
+        13 : 'RU', # Rusko
+        14 : 'SE', # Švédsko
+        15 : 'CH', # Švýcarsko
+        16 : 'TH', # Thajsko
+        17 : 'TR', # Turecko
+        18 : 'BE', # Belgie
+        19 : 'FR', # Francie
+        21 : 'IE', # Irsko
+        22 : 'IT', # Itálie
+        23 : 'ES', # Španělština
+        25 : 'NO', # Norsko
+        27 : 'AR', # Argentina
+        30 : 'PT', # Portugalsko
+        31 : 'TJ', # Tádžikistán
+        33 : 'JP', # Japonsko
+        34 : 'CZ', # Česká Republika
+        35 : 'AU', # Austrálie
+        36 : 'CZ', # Česká Republika
+        37 : 'BG', # Bulharsko
+        41 : 'EG', # Egypt
+        47 : 'DE', # Německo
+        48 : 'DE', # Německo
+        49 : 'CN', # Čína
+        52 : 'SK', # Slovensko
+        55 : 'PE', # Peru
+        62 : 'IS', # Island
         # TODO
     }
 
@@ -118,7 +118,7 @@ class Movie:
         self.genres = list()
         self.imbd_url = None
         self.music = list()
-        self.names = {}
+        self._names = {}
         self.posters = list()
         self.rating = None
         self.runtime_str = None
@@ -137,17 +137,19 @@ class Movie:
         - url: celá URL stránky filmu [string]
         """
 
+        # zparsuje HTML a vytvoří XML DOM
         doc = parse(url).getroot()
 
+        # sekce profilu filmu
         profile = doc.xpath("//div[@id='profile']/div/div[2]")[0]
-
-        # český název
-        self.names['cs'] = profile.xpath("h1/text()")[0].strip()
     
-        # ostatní názvy
+        # názvy v dalších zemích
         for item in profile.xpath("ul[@class='names']/li"):
-            lang = self._convert_lang(item.find('img').get('src'))
-            self.names[lang] = item.find('h3').text.strip()
+            country = self._convert_flag(item.find('img').get('src'))
+            self._names[country] = item.find('h3').text.strip()
+
+        # oficiální název v ČR
+        self._names['CZ'] = profile.xpath("h1/text()")[0].strip()
 
         # žánry
         raw_genres = profile.xpath("p[@class='genre']/text()")
@@ -192,7 +194,7 @@ class Movie:
             self.content = doc.xpath("//div[@id='plots']/div[2]//div/text()")[1].strip()
         except IndexError: pass
 
-
+        # sekce hodnocení a žebříčků
         doc_rating = doc.xpath("//div[@id='rating']")[0]
 
         # hodnocení
@@ -249,65 +251,75 @@ class Movie:
         except IndexError: pass
 
 
-    def _convert_lang(self, flag_url):
+    def _convert_flag(self, flag_url):
         """
-        Podle dané URL nebo názvu obrázku vlajky určí jazyk, který reprezentuje, 
-        a vrátí kód tohoto jazyka v ISO 639-1. Pokud nenajde mapování pro danou
-        vlajku, vrátí pomlčku -.
+        Z dané URL (nebo názvu) obrázku vlajky určí kód její země (ISO 3166-1).
+        Pokud nenajde mapování pro danou vlajku, vrátí pomlčku -.
 
         - flag_url: URL nebo název obrázku vlajky [string]
-        - return: kód jazyka [string]
+        - return: kód země [string]
         """
 
         flag_num = int( Movie._RE_FLAG_NUM.search(flag_url).group(1) )
 
         try:
-            return Movie._MAP_FLAG_LANG[flag_num]
+            return Movie._MAP_FLAG_ISO[flag_num]
         except KeyError:
             return '-'
 
 
-    @property
-    def origo_lang(self):
+    def _origo_name_code(self):
         """
-        Podle dostupných názvů pro různé jazyky se pokusí určit, který z nich
-        je původní název filmu (tj. název v jazyku produkční země) a vrátí
-        kód jazyka (v ISO 639-1).
+        Pokusí se určit, ke které zemi se vztahuje původní název filmu a vrátí
+        kód této země.
 
-        - return: jazyk původního název filmu [string]
+        - return: kód země v ISO 3166-1 [string]
         """
+        codes = set( self._names.keys() )
 
-        langs = set( self.names.keys() )
+        # české filmy je nutné ošetřit explicitně, podle první země produkce
+        if (self.countries and self.countries[0] in ["Česko", "Československo"]):
+            return 'CZ'
 
-        if (self.countries.count("Česko") or self.countries.count("Československo")):
-            return 'cs'
-
+        # na zahraniční filmy lze použít vylučovací metodu
         else:
             try:
-                langs.remove('cs')
-                langs.remove('sk')
+                codes.remove('CZ')
+                codes.remove('SK')
             except KeyError: pass
         
-            if (len(langs) == 0):
-                return 'cs'
-            elif (len(langs) == 1):
-                return langs.pop()
-            elif (len(langs) > 1):
+            if (len(codes) == 0):
+                return 'CZ'
+            elif (len(codes) == 1):
+                return codes.pop()
+            elif (len(codes) > 1):
                 try:
-                    langs.remove('en')
+                    codes.remove('US')
                 except KeyError: pass
-                return langs.pop()
+                return codes.pop()
+
+
+    @property
+    def names(self):
+        """
+        Vrátí všechny názvy filmu jako slovník {kód země : název filmu}. Kódy
+        zemí jsou v ISO 3166-1.
+        
+        - return názvy filmu [dict(str:str)]
+        """
+        return self._names
 
 
     @property
     def origo_name(self):
         """
-        Vrátí původní název filmu (tj. název v jazyku produkční země), určený
-        podle metody origo_lang().
+        Vrátí původní název filmu (tj. název z produkční země). Určení toho,
+        který název je původní, není stoprocentně spolehlivé, ale v drtivé
+        většině případů by mělo fungovat.
 
         - return: původní název filmu [string]
         """
-        return self.names[self.origo_lang]
+        return self._names[self._origo_name_code()]
 
 
     @property
