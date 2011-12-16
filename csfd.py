@@ -33,7 +33,7 @@
 # 
 #
 # @author Jakub Jirutka <jakub@jirutka.cz>
-# @version 1.0.1 beta
+# @version 1.0.2 beta
 # @date 2011-12-16
 #
 
@@ -168,7 +168,7 @@ class Movie:
                 self.year = int( cyr.pop() )
 
             # země
-            self.countries = [i for i in cyr]
+            self.countries = list( i.strip() for i in cyr.pop().split('/') )
 
         except IndexError: pass
 
