@@ -34,7 +34,7 @@
 #
 # @author Jakub Jirutka <jakub@jirutka.cz>
 # @version 1.0.3 beta
-# @date 2011-12-16
+# @date 2011-12-26
 #
 
 from urllib.request import Request, urlopen
@@ -106,7 +106,8 @@ class Movie:
 
     def __init__(self, url):
         """
-        - url: celá URL stránky filmu [string]
+        @param url: celá URL stránky filmu
+        @type url: string
         """
         self.actors = list()
         self.best_rank = None
@@ -134,7 +135,7 @@ class Movie:
         """
         Načte HTML stránku filmu z dané URL, zparsuje a získá z ní požadovaná data.
 
-        - url: celá URL stránky filmu [string]
+        @param url: celá URL stránky filmu
         """
 
         # zparsuje HTML a vytvoří XML DOM
@@ -256,8 +257,9 @@ class Movie:
         Z dané URL (nebo názvu) obrázku vlajky určí kód její země (ISO 3166-1).
         Pokud nenajde mapování pro danou vlajku, vrátí pomlčku -.
 
-        - flag_url: URL nebo název obrázku vlajky [string]
-        - return: kód země [string]
+        @param flag_url: URL nebo název obrázku vlajky
+        @return: kód země v ISO 3166-1
+        @rtype: string
         """
 
         flag_num = int( Movie._RE_FLAG_NUM.search(flag_url).group(1) )
@@ -273,7 +275,8 @@ class Movie:
         Pokusí se určit, ke které zemi se vztahuje původní název filmu a vrátí
         kód této země.
 
-        - return: kód země v ISO 3166-1 [string]
+        @return: kód země v ISO 3166-1
+        @rtype: string
         """
         codes = set( self._names.keys() )
 
@@ -305,7 +308,8 @@ class Movie:
         Vrátí všechny názvy filmu jako slovník {kód země : název filmu}. Kódy
         zemí jsou v ISO 3166-1.
         
-        - return názvy filmu [dict(str:str)]
+        @return: názvy filmu
+        @rtype: dict(str:str)
         """
         return self._names
 
@@ -317,7 +321,8 @@ class Movie:
         který název je původní, není stoprocentně spolehlivé, ale v drtivé
         většině případů by mělo fungovat.
 
-        - return: původní název filmu [string]
+        @return: původní název filmu
+        @rtype: string
         """
         return self._names[self._origo_name_code()]
 
@@ -328,7 +333,8 @@ class Movie:
         Vrátí standardní stopáž filmu jako číslo (ořízne případnou další
         stopáž uvedenou v závorce).
         
-        - return: stopáž filmu [int]
+        @return: stopáž filmu
+        @rtype: int
         """
         return int( self.runtime_str.split()[0] ) if self.runtime_str else None
 
@@ -343,10 +349,14 @@ class MovieSearchResult:
 
     def __init__(self, name, name_alt, year, url):
         """
-        - name: český název [string]
-        - name_alt: druhý název (většinou původní název filmu) [string]
-        - year: rok vydání [int]
-        - url: celá URL stránky filmu [string]
+        @param name: český název
+        @type name: string
+        @param name_alt: druhý název (většinou původní název filmu)
+        @type name_alt: string
+        @param year: rok vydání
+        @type year: int
+        @param url: celá URL stránky filmu
+        @type url: string
         """
         self.name = name
         self.name_alt = name_alt
@@ -358,7 +368,8 @@ class MovieSearchResult:
         """
         Načte a vrátí objekt obsahující kompletní informace o filmu.
 
-        - return: objekt filmu [Movie]
+        @return: objekt filmu
+        @rtype: Movie
         """
 
         return get_movie(self.url)
@@ -373,8 +384,10 @@ class Person:
     
     def __init__(self, name, profile_url):
         """
-        - name: celé jméno [string]
-        - profile_url: celá URL stránky profilu [string]
+        @param name: celé jméno
+        @type name: string
+        @param profile_url: celá URL stránky profilu
+        @type profile_url: string
         """
         self.name = name
         self.profile_url = profile_url
@@ -389,8 +402,10 @@ def find_movie(text):
     Vyhledá film na ČSFD podle daného názvu a vrátí seznam nalezených 
     výsledků.
 
-    - text: název filmu (klíčová slova) [string]
-    - return: seznam výsledků [list(MovieSearchResult)]
+    @param text: název filmu (klíčová slova)
+    @type text: string
+    @return: seznam výsledků
+    @rtype: list(MovieSearchResult)
     """
 
     # TODO ošetřit přesměrování přímo na stránku filmu při jednoznačném výsledku
@@ -458,18 +473,20 @@ def find_movie(text):
 
 
 
-def get_movie(id):
+def get_movie(id_or_url):
     """
     Načte a vrátí objekt obsahující kompletní informace ze stránky filmu na 
     ČSFD podle její URL nebo ID filmu.
 
-    - id: ID filmu nebo celá URL stránky filmu [string]
-    - return: objekt filmu [Movie]
+    @param id_or_url: ID filmu nebo celá URL stránky filmu
+    @type id_or_url: string | int
+    @return: objekt filmu
+    @rtype: Movie
     """
 
     if(str(id).isdigit()):
-        url = MOVIES_URL + str(id)
+        url = MOVIES_URL + str(id_or_url)
     else:
-        url = id
+        url = id_or_url
 
     return Movie(url)
