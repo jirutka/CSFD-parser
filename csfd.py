@@ -117,7 +117,7 @@ class Movie:
         self.directors = list()
         self.favorite_rank = None
         self.genres = list()
-        self.imbd_url = None
+        self.imdb_url = None
         self.music = list()
         self._names = {}
         self.posters = list()
@@ -243,7 +243,7 @@ class Movie:
 
         # odkaz na IMDb.com
         try: 
-            self.imbd_url = doc.xpath("//div[@id='share']//a[@title='profil na IMDb.com']/@href")[0]
+            self.imdb_url = doc.xpath("//div[@id='share']//a[@title='profil na IMDb.com']/@href")[0]
         except IndexError: pass
 
         # odkaz na oficiální web filmu
