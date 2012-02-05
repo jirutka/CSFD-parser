@@ -33,8 +33,8 @@
 # 
 #
 # @author Jakub Jirutka <jakub@jirutka.cz>
-# @version 1.0.3 beta
-# @date 2011-12-26
+# @version 1.0.4 beta
+# @date 2012-02-05
 #
 
 from urllib.request import Request, urlopen
@@ -147,6 +147,8 @@ class Movie:
         # názvy v dalších zemích
         for item in profile.xpath("ul[@class='names']/li"):
             country = self._convert_flag(item.find('img').get('src'))
+            # existuje-li pro jednu zemi více názvů, chceme jen ten první
+            if (country in self._names): continue
             self._names[country] = item.find('h3').text.strip()
 
         # oficiální název v ČR
