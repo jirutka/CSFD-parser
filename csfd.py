@@ -27,21 +27,18 @@
 # Upozornění: Používejte tento kód pouze pro vlastní potřebu, nezneužívejte ho 
 # pro vykrádání databáze ČSFD!
 #
-# Požadavky: 
-#   - Python 3 (testováno na verzi 3.1)
-#   - lxml (testováno na verzi 2.3.1)
-# 
-#
 # @author Jakub Jirutka <jakub@jirutka.cz>
-# @version 1.0.4 beta
-# @date 2012-02-05
 #
 
-from urllib.request import Request, urlopen
-from urllib.parse import urlencode
-from lxml.html import parse
 import re
 
+from sys import version_info
+if version_info < (3, 0):
+    from urllib import urlencode
+else:
+    from urllib.parse import urlencode
+
+from lxml.html import parse
 
 ############################  C O N S T A N T S  #############################
 
@@ -49,11 +46,9 @@ BASE_URL = "http://www.csfd.cz"
 MOVIES_URL = "http://www.csfd.cz/film/"
 SEARCH_URL = "http://www.csfd.cz/hledat/"
 
-
-
 ##############################  C L A S S E S  ###############################
 
-class Movie:
+class Movie(object):
     """
     Třída reprezentující stránku filmu na ČSFD. Při vytvoření instance načte
     a zparsuje stránku daného filmu.
@@ -103,7 +98,6 @@ class Movie:
 
     _RE_FLAG_NUM = re.compile("_([0-9]+)")
 
-
     def __init__(self, url):
         """
         @param url: celá URL stránky filmu
@@ -129,7 +123,6 @@ class Movie:
         self.year = None
 
         self._fetch_data(url)
-
 
     def _fetch_data(self, url):
         """
@@ -253,7 +246,6 @@ class Movie:
             self.website_url = doc.xpath("//div[@id='share']//a[@class='www']/@href")[0]
         except IndexError: pass
 
-
     def _convert_flag(self, flag_url):
         """
         Z dané URL (nebo názvu) obrázku vlajky určí kód její země (ISO 3166-1).
@@ -270,7 +262,6 @@ class Movie:
             return Movie._MAP_FLAG_ISO[flag_num]
         except KeyError:
             return '-'
-
 
     def _origo_name_code(self):
         """
@@ -303,7 +294,6 @@ class Movie:
                 except KeyError: pass
                 return codes.pop()
 
-
     @property
     def names(self):
         """
@@ -314,7 +304,6 @@ class Movie:
         @rtype: dict(str:str)
         """
         return self._names
-
 
     @property
     def origo_name(self):
@@ -328,7 +317,6 @@ class Movie:
         """
         return self._names[self._origo_name_code()]
 
-
     @property
     def runtime(self):
         """
@@ -340,9 +328,7 @@ class Movie:
         """
         return int( self.runtime_str.split()[0] ) if self.runtime_str else None
 
-
-
-class MovieSearchResult:
+class MovieSearchResult(object):
     """
     Třída reprezentující položku filmu z výsledků hledání na ČSFD. Obsahuje 
     pouze základní informace dostupné ze stránky s výsledky a poskytuje 
@@ -365,7 +351,6 @@ class MovieSearchResult:
         self.url = url
         self.year = year
 
-
     def get_movie(self):
         """
         Načte a vrátí objekt obsahující kompletní informace o filmu.
@@ -376,9 +361,7 @@ class MovieSearchResult:
 
         return get_movie(self.url)
 
-
-
-class Person:
+class Person(object):
     """
     Třída reprezentující odkaz na osobu (např. režiséra, herce...) Obsahuje 
     její jméno a URL stránky profilu na ČSFD.
@@ -393,9 +376,6 @@ class Person:
         """
         self.name = name
         self.profile_url = profile_url
-
-
-
 
 ############################  F U N C T I O N S  #############################
 
@@ -470,10 +450,7 @@ def find_movie(text):
 
         results.append( MovieSearchResult(name, name_alt, year, url) )
 
-
     return results
-
-
 
 def get_movie(id_or_url):
     """
