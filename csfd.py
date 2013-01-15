@@ -171,7 +171,7 @@ class Movie(object):
         except IndexError: pass
 
         # režiséři
-        for item in profile.xpath("div[h4='Režie:']//a"):
+        for item in profile.xpath(u"div[h4='Režie:']//a"):
             person = Person(item.text, BASE_URL + item.get('href'))
             self.directors.append(person)
 
@@ -181,7 +181,7 @@ class Movie(object):
             self.music.append(person)
 
         # herci
-        for item in profile.xpath("div[h4='Hrají:']//a"):
+        for item in profile.xpath(u"div[h4='Hrají:']//a"):
             person = Person(item.text, BASE_URL + item.get('href'))
             self.actors.append(person)
 
