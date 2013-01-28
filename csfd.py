@@ -422,7 +422,10 @@ def find_movie(text):
         gcy = item.find("p").text
 
         # rok vydání
-        year = int( gcy.split(',')[-1].strip() )
+        try:
+            year = int( gcy.split(',')[-1].strip() )
+        except ValueError:
+            year = None
 
         results.append( MovieSearchResult(name, name_alt, year, url) )
 
