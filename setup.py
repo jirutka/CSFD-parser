@@ -3,7 +3,7 @@ from distutils.core import setup
 __version__ = '1.0.5'
 
 setup(
-    name='csfd',
+    name='csfd-parser',
     version=__version__,
     py_modules=['csfd'],
     url='https://github.com/jirutka/CSFD-parser',
