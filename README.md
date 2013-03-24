@@ -1,6 +1,6 @@
 # ČSFD Parser
 
-Parser pro stránky filmů a vyhledávání na [ČSFD](http://www.csfd.cz) napsaný v Pythonu 3.
+Parser pro stránky filmů a vyhledávání na [ČSFD](http://www.csfd.cz).
 
 
 ## Poznámky
@@ -14,7 +14,7 @@ Tento parser není postavený na regulérních výrazech, ale místo toho využ�
 
 ## Požadavky
 
-* Python 3 (testováno na 3.1)
+* Python 2.7 / 3.1
 * [lxml](http://lxml.de/) (testováno na 2.3.1)
 
 
@@ -26,3 +26,7 @@ Používejte tento kód pouze pro vlastní potřebu, nezneužívejte ho pro vykr
 ## Licence
 
 Tento projekt je uveřejněný pod licencí [LGPL version 3](http://www.gnu.org/licenses/lgpl.txt).
+
+## Contributors
+
+[Alex Rembish](http://github.com/rembish)
